@@ -1,0 +1,44 @@
+package com.taskflow.controller;
+
+import com.taskflow.dto.WorkflowCreateRequest;
+import com.taskflow.dto.WorkflowResponse;
+import com.taskflow.service.WorkflowService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/v1/workflows")
+@RequiredArgsConstructor
+public class WorkflowController {
+
+    private final WorkflowService workflowService;
+
+    @PostMapping
+    public ResponseEntity<WorkflowResponse> createWorkflow(@Valid @RequestBody WorkflowCreateRequest request) {
+        WorkflowResponse response = workflowService.createWorkflow(request);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<WorkflowResponse> getWorkflow(@PathVariable UUID id) {
+        WorkflowResponse response = workflowService.getWorkflow(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<WorkflowResponse>> listWorkflows() {
+        List<WorkflowResponse> response = workflowService.listWorkflows();
+        return ResponseEntity.ok(response);
+    }
+}
