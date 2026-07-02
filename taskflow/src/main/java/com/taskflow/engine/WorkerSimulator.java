@@ -6,7 +6,9 @@ import com.taskflow.model.enums.WorkflowStatus;
 import com.taskflow.repository.TaskRepository;
 import com.taskflow.repository.WorkerNodeRepository;
 import com.taskflow.repository.WorkflowRepository;
+import com.taskflow.dto.WorkflowEvent;
 import com.taskflow.model.WorkerNode;
+import com.taskflow.service.EventPublisherService;
 import com.taskflow.service.TaskQueueService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class WorkerSimulator {
     private final TaskQueueService taskQueueService;
     private final TaskRepository taskRepository;
     private final WorkflowRepository workflowRepository;
+    private final EventPublisherService eventPublisher;
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(3);
 
@@ -68,6 +71,9 @@ public class WorkerSimulator {
                         freshTask.setStatus(TaskStatus.COMPLETED);
                         freshTask.setCompletedAt(Instant.now());
                         taskRepository.save(freshTask);
+                        
+                        eventPublisher.publishEvent(new WorkflowEvent("TASK_UPDATE", freshTask.getWorkflowId(), freshTask.getId(), "COMPLETED"));
+                        
                         log.info("Task {} completed successfully", freshTask.getName());
                     });
                 } else {
@@ -80,16 +86,24 @@ public class WorkerSimulator {
                             freshTask.setStatus(TaskStatus.PENDING);
                             freshTask.setErrorLog("Random simulated failure");
                             taskRepository.save(freshTask);
+                            
+                            eventPublisher.publishEvent(new WorkflowEvent("TASK_UPDATE", freshTask.getWorkflowId(), freshTask.getId(), "PENDING"));
+                            
                             log.warn("Task {} failed, retrying ({}/{})", freshTask.getName(), freshTask.getRetryCount(), maxRetries);
                         } else {
                             freshTask.setStatus(TaskStatus.FAILED);
                             freshTask.setErrorLog("Random simulated failure - Max retries exceeded");
                             taskRepository.save(freshTask);
                             
+                            eventPublisher.publishEvent(new WorkflowEvent("TASK_UPDATE", freshTask.getWorkflowId(), freshTask.getId(), "FAILED"));
+                            
                             workflowRepository.findById(freshTask.getWorkflowId()).ifPresent(workflow -> {
                                 workflow.setStatus(WorkflowStatus.FAILED);
                                 workflow.setCompletedAt(Instant.now());
                                 workflowRepository.save(workflow);
+                                
+                                eventPublisher.publishEvent(new WorkflowEvent("WORKFLOW_UPDATE", workflow.getId(), null, "FAILED"));
+                                
                                 log.error("Workflow {} failed due to task {}", workflow.getId(), freshTask.getId());
                             });
                         }

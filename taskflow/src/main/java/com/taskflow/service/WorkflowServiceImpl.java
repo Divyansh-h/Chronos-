@@ -1,6 +1,7 @@
 package com.taskflow.service;
 
 import com.taskflow.dto.WorkflowCreateRequest;
+import com.taskflow.dto.WorkflowEvent;
 import com.taskflow.dto.WorkflowResponse;
 import com.taskflow.exception.ResourceNotFoundException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,6 +27,7 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     private final WorkflowRepository workflowRepository;
     private final TaskRepository taskRepository;
+    private final EventPublisherService eventPublisher;
 
     @Override
     @Transactional
@@ -55,6 +57,8 @@ public class WorkflowServiceImpl implements WorkflowService {
         tasks = taskRepository.saveAll(tasks);
         
         log.info("Successfully created workflow {} with {} tasks", workflow.getId(), tasks.size());
+        
+        eventPublisher.publishEvent(new WorkflowEvent("WORKFLOW_UPDATE", workflow.getId(), null, workflow.getStatus().name()));
         
         return WorkflowResponse.fromEntity(workflow, tasks);
     }

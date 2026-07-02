@@ -1,5 +1,6 @@
 package com.taskflow.service;
 
+import com.taskflow.dto.WorkflowEvent;
 import com.taskflow.model.Task;
 import com.taskflow.model.enums.TaskStatus;
 import com.taskflow.repository.TaskRepository;
@@ -26,6 +27,7 @@ public class TaskQueueServiceImpl implements TaskQueueService {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final TaskRepository taskRepository;
+    private final EventPublisherService eventPublisher;
 
     @Override
     @Transactional
@@ -67,6 +69,9 @@ public class TaskQueueServiceImpl implements TaskQueueService {
                 task.setStartedAt(Instant.now());
                 
                 task = taskRepository.save(task);
+                
+                eventPublisher.publishEvent(new WorkflowEvent("TASK_UPDATE", task.getWorkflowId(), task.getId(), task.getStatus().name()));
+                
                 log.info("Worker {} claimed task {}", workerId, taskId);
                 return Optional.of(task);
             } else {
