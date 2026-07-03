@@ -19,12 +19,12 @@ docker kill chronos-redis-1 > /dev/null || docker kill redis > /dev/null || echo
 echo "Waiting for Spring Boot background threads to encounter the dead connection..."
 sleep 5
 
-echo -e "\n🔍 Verifying Backend Resilience Logs:"
+echo -e "\n Verifying Backend Resilience Logs:"
 # We grep the logs for the specific Redis connection exception to prove the catch block triggered
 docker logs chronos-backend-1 2>&1 | grep -i "Failed to poll task queue" || echo "Could not find expected graceful degradation log."
 
-echo -e "\n✅ If you see the error log above without a thread stacktrace crash, the system successfully survived the container death."
+echo -e "\n If you see the error log above without a thread stacktrace crash, the system successfully survived the container death."
 
-echo -e "\n🩹 Restoring Redis container..."
+echo -e "\n Restoring Redis container..."
 docker start chronos-redis-1 > /dev/null || docker start redis > /dev/null
 echo "Redis restored."
