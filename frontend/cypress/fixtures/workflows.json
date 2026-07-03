@@ -1,0 +1,7 @@
+[
+  { "id": "uuid-1", "name": "Data Ingestion Workflow", "status": "RUNNING" },
+  { "id": "uuid-2", "name": "Model Training Pipeline", "status": "RUNNING" },
+  { "id": "uuid-3", "name": "Nightly Backup", "status": "FAILED" },
+  { "id": "uuid-4", "name": "Report Generation", "status": "COMPLETED" },
+  { "id": "uuid-5", "name": "Email Notifications", "status": "COMPLETED" }
+]

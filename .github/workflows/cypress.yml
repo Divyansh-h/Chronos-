@@ -1,0 +1,41 @@
+name: Cypress End-to-End Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  e2e-testing:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Provision Infrastructure via Docker Compose
+        # This spins up Postgres, Redis, the Spring Boot Java Backend, and the Vite React Frontend entirely in the background
+        run: docker-compose up --build -d
+
+      - name: Execute Cypress Headless Automation
+        uses: cypress-io/github-action@v6
+        with:
+          # Tells Cypress where our package.json and cypress configs live
+          working-directory: frontend
+          
+          # Pauses the pipeline until both the React Dev Server and Spring Boot REST API return HTTP 200/2xx
+          wait-on: 'http://localhost:5173, http://localhost:8080/api/v1/workflows'
+          wait-on-timeout: 180
+          
+          # Automatically records screenshots and videos for failed assertions
+          config: video=true,screenshotOnRunFailure=true
+
+      - name: Dump Container Logs on Failure
+        if: failure()
+        run: docker-compose logs

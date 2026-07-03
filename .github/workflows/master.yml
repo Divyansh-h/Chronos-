@@ -1,0 +1,130 @@
+name: Master FAANG-Tier CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # =========================================================================
+  # STAGE 1: Fast Feedback (Unit, Integration, and Static Analysis)
+  # =========================================================================
+  unit-tests:
+    name: Backend & Frontend Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Setup Java 21 LTS
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+          
+      - name: Execute Backend Tests & JaCoCo Coverage
+        run: ./mvnw clean verify
+        working-directory: ./taskflow
+        
+      - name: Setup Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './frontend/package-lock.json'
+          
+      - name: Install Frontend Dependencies
+        run: npm ci
+        working-directory: ./frontend
+        
+      - name: Execute Vitest Headless React Tests
+        run: npm run coverage
+        working-directory: ./frontend
+
+  # =========================================================================
+  # STAGE 2: Image Compilation (Only runs if Unit Tests pass)
+  # =========================================================================
+  build-images:
+    name: Compile Docker Images
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Build Spring Boot Image
+        run: docker build -t taskflow-backend:latest ./taskflow
+        
+      - name: Build Vite/Nginx Image
+        run: docker build -t taskflow-frontend:latest ./frontend
+
+  # =========================================================================
+  # STAGE 3: UI Automation (Spins up real infrastructure)
+  # =========================================================================
+  e2e-testing:
+    name: Cypress Browser Automation
+    needs: build-images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Provision Full Stack Topology
+        run: docker-compose up --build -d
+        
+      - name: Execute Cypress UI Verification
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: frontend
+          wait-on: 'http://localhost:5173, http://localhost:8080/api/v1/workflows'
+          wait-on-timeout: 180
+          config: video=false,screenshotOnRunFailure=true
+          
+      - name: Extract Failure Artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: frontend/cypress/screenshots
+          
+      - name: Dump Server Diagnostics
+        if: failure()
+        run: docker-compose logs
+
+  # =========================================================================
+  # STAGE 4: Performance SLO Enforcement (Strict 500ms limit)
+  # =========================================================================
+  load-testing:
+    name: k6 Performance & Chaos Engineering
+    needs: build-images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Provision Dedicated Performance Topology
+        run: docker-compose up --build -d
+        
+      - name: Block until API healthy
+        run: |
+          for i in {1..30}; do
+            curl -s http://localhost:8080/api/v1/workflows && break
+            echo "Waiting for Spring Boot..." && sleep 2
+          done
+          
+      - name: Install k6 Engine
+        uses: grafana/setup-k6-action@v1
+        
+      - name: Execute Heavy API Spam Simulation (Strict SLOs)
+        # Using environment variables to strictly enforce p(95) < 500ms without modifying the JS file
+        run: k6 run --env K6_THRESHOLDS_HTTP_REQ_DURATION="p(95)<500" ./load-tests/load-test.js
+        
+      - name: Execute Redis Queue Contention Simulation
+        # This script already has p(95) < 50ms hardcoded inside it
+        run: k6 run ./load-tests/queue-load-test.js
+        
+      - name: Dump Thread Dumps & Heap Errors on Failure
+        if: failure()
+        run: docker-compose logs
