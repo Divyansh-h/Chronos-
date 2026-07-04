@@ -24,7 +24,6 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@SuppressWarnings("null")
 public class WorkflowEngineTest {
 
     @Mock

@@ -28,6 +28,7 @@ import java.util.concurrent.TimeoutException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@SuppressWarnings("null")
 public class WebSocketBrokerIT extends AbstractIntegrationTest {
 
     @LocalServerPort
