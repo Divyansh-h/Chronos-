@@ -79,7 +79,11 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Override
     public List<WorkflowResponse> listWorkflows() {
-        // To be implemented
-        return null;
+        return workflowRepository.findAll().stream()
+                .map(workflow -> {
+                    List<Task> tasks = taskRepository.findByWorkflowId(workflow.getId());
+                    return WorkflowResponse.fromEntity(workflow, tasks);
+                })
+                .toList();
     }
 }
