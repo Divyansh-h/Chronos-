@@ -56,6 +56,10 @@ public class WorkflowServiceImpl implements WorkflowService {
         
         tasks = taskRepository.saveAll(tasks);
         
+        // Auto-transition to RUNNING so the WorkflowEngine picks it up
+        workflow.setStatus(WorkflowStatus.RUNNING);
+        workflow = workflowRepository.save(workflow);
+        
         log.info("Successfully created workflow {} with {} tasks", workflow.getId(), tasks.size());
         
         eventPublisher.publishEvent(new WorkflowEvent("WORKFLOW_UPDATE", workflow.getId(), null, workflow.getStatus().name()));
