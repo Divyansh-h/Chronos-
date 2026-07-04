@@ -28,11 +28,15 @@ public class WorkflowServiceImpl implements WorkflowService {
     private final WorkflowRepository workflowRepository;
     private final TaskRepository taskRepository;
     private final EventPublisherService eventPublisher;
+    private final DagResolutionService dagResolutionService;
 
     @Override
     @Transactional
     public WorkflowResponse createWorkflow(WorkflowCreateRequest request) {
         log.info("Creating new workflow: {}", request.name());
+        
+        // Validate DAG structure — rejects cycles, missing refs, duplicates
+        dagResolutionService.validateDag(request.dagDefinition());
         
         Workflow workflow = new Workflow();
         workflow.setName(request.name());
@@ -43,14 +47,21 @@ public class WorkflowServiceImpl implements WorkflowService {
         
         List<Task> tasks = new ArrayList<>();
         if (request.dagDefinition().isArray()) {
+            int index = 0;
             for (JsonNode node : request.dagDefinition()) {
                 Task task = new Task();
                 task.setWorkflowId(workflow.getId());
                 task.setName(node.has("name") ? node.get("name").asText() : "Unnamed Task");
-                task.setStatus(TaskStatus.PENDING);
+                task.setDagNodeIndex(index);
                 task.setRetryCount(0);
                 task.setMaxRetries(3);
+                
+                // Root tasks (no dependsOn) start as PENDING; tasks with deps start as BLOCKED
+                boolean hasDeps = dagResolutionService.hasDependencies(request.dagDefinition(), task.getName());
+                task.setStatus(hasDeps ? TaskStatus.BLOCKED : TaskStatus.PENDING);
+                
                 tasks.add(task);
+                index++;
             }
         }
         
@@ -60,7 +71,10 @@ public class WorkflowServiceImpl implements WorkflowService {
         workflow.setStatus(WorkflowStatus.RUNNING);
         workflow = workflowRepository.save(workflow);
         
-        log.info("Successfully created workflow {} with {} tasks", workflow.getId(), tasks.size());
+        log.info("Successfully created workflow {} with {} tasks ({} root, {} blocked)",
+                workflow.getId(), tasks.size(),
+                tasks.stream().filter(t -> t.getStatus() == TaskStatus.PENDING).count(),
+                tasks.stream().filter(t -> t.getStatus() == TaskStatus.BLOCKED).count());
         
         eventPublisher.publishEvent(new WorkflowEvent("WORKFLOW_UPDATE", workflow.getId(), null, workflow.getStatus().name()));
         

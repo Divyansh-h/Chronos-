@@ -56,6 +56,9 @@ public class Task {
 
     private String errorLog;
 
+    @Column(name = "dag_node_index")
+    private Integer dagNodeIndex;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

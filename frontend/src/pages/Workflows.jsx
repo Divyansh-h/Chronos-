@@ -6,7 +6,7 @@ export default function Workflows() {
   const [workflows, setWorkflows] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState('');
-  const [dagJson, setDagJson] = useState('[\n  { "name": "Task 1" }\n]');
+  const [dagJson, setDagJson] = useState('[\n  { "name": "Task 1" },\n  { "name": "Task 2", "dependsOn": ["Task 1"] }\n]');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function Workflows() {
     try {
       const payload = {
         name,
-        tasks: JSON.parse(dagJson)
+        dagDefinition: JSON.parse(dagJson)
       };
       const newWorkflow = await createWorkflow(payload);
       setWorkflows([newWorkflow, ...workflows]);

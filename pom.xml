@@ -4,30 +4,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.4</version>
-        <relativePath/> <!-- lookup parent from repository -->
-    </parent>
-
     <groupId>com.taskflow</groupId>
-    <artifactId>taskflow</artifactId>
+    <artifactId>chronos-parent</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>taskflow</name>
+    <packaging>pom</packaging>
+    <name>Chronos Parent</name>
     <description>Distributed Task Orchestration Engine</description>
 
-    <properties>
-        <java.version>21</java.version>
-    </properties>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
+    <modules>
+        <module>taskflow</module>
+    </modules>
 
 </project>
+
