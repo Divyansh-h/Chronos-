@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("null")
 public class DagResolutionService {
 
     private final TaskRepository taskRepository;
@@ -184,7 +185,7 @@ public class DagResolutionService {
             for (String dep : entry.getValue()) {
                 // dep → task (dep must complete before task)
                 reverseAdj.get(dep).add(task);
-                inDegree.merge(task, 1, Integer::sum);
+                inDegree.merge(task, 1, (a, b) -> a + b);
             }
         }
 

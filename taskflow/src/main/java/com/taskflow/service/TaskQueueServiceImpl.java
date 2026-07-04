@@ -20,6 +20,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("null")
 public class TaskQueueServiceImpl implements TaskQueueService {
 
     private static final String QUEUE_KEY = "taskflow:queue:pending";

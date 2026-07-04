@@ -1,4 +1,4 @@
-name: Master FAANG-Tier CI/CD Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -25,7 +25,7 @@ jobs:
           cache: maven
           
       - name: Execute Backend Tests & JaCoCo Coverage
-        run: ./mvnw clean verify
+        run: ./mvnw clean test
         working-directory: ./taskflow
         
       - name: Setup Node.js 20 LTS

@@ -36,21 +36,23 @@ public class WorkflowApiIT extends AbstractIntegrationTest {
 
         // Assert 1: Creation Success
         assertEquals(HttpStatus.CREATED, postResponse.getStatusCode());
-        assertNotNull(postResponse.getBody());
-        assertEquals("End-to-End Workflow", postResponse.getBody().name());
-        assertNotNull(postResponse.getBody().id());
+        WorkflowResponse postBody = postResponse.getBody();
+        assertNotNull(postBody);
+        assertEquals("End-to-End Workflow", postBody.name());
+        assertNotNull(postBody.id());
 
         // Act 2: HTTP GET to fetch workflow
         ResponseEntity<WorkflowResponse> getResponse = restTemplate.getForEntity(
-                "/api/v1/workflows/" + postResponse.getBody().id(), WorkflowResponse.class);
+                "/api/v1/workflows/" + postBody.id(), WorkflowResponse.class);
 
         // Assert 2: Fetch Success and Data Integrity
         assertEquals(HttpStatus.OK, getResponse.getStatusCode());
-        assertNotNull(getResponse.getBody());
-        assertEquals(postResponse.getBody().id(), getResponse.getBody().id());
-        assertEquals("End-to-End Workflow", getResponse.getBody().name());
+        WorkflowResponse getBody = getResponse.getBody();
+        assertNotNull(getBody);
+        assertEquals(postBody.id(), getBody.id());
+        assertEquals("End-to-End Workflow", getBody.name());
         
-        assertNotNull(getResponse.getBody().tasks());
-        assertEquals(2, getResponse.getBody().tasks().size(), "Should have exactly 2 child tasks mapped and returned");
+        assertNotNull(getBody.tasks());
+        assertEquals(2, getBody.tasks().size(), "Should have exactly 2 child tasks mapped and returned");
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("null")
 public class EventPublisherService {
 
     private final SimpMessagingTemplate simpMessagingTemplate;

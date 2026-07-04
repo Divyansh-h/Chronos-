@@ -7,6 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompFrameHandler;
@@ -55,23 +57,24 @@ public class WebSocketBrokerIT extends AbstractIntegrationTest {
 
         StompSession session = stompClient.connectAsync(wsUrl, new StompSessionHandlerAdapter() {
             @Override
-            public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+            public void afterConnected(@NonNull StompSession session, @NonNull StompHeaders connectedHeaders) {
                 // Subscribe to the public topic our React frontend uses
                 session.subscribe("/topic/workflow-events", new StompFrameHandler() {
                     @Override
-                    public Type getPayloadType(StompHeaders headers) {
+                    @NonNull
+                    public Type getPayloadType(@NonNull StompHeaders headers) {
                         return WorkflowEvent.class;
                     }
 
                     @Override
-                    public void handleFrame(StompHeaders headers, Object payload) {
+                    public void handleFrame(@NonNull StompHeaders headers, @Nullable Object payload) {
                         completableFuture.complete((WorkflowEvent) payload);
                     }
                 });
             }
 
             @Override
-            public void handleException(StompSession session, StompCommand command, StompHeaders headers, byte[] payload, Throwable exception) {
+            public void handleException(@NonNull StompSession session, @Nullable StompCommand command, @NonNull StompHeaders headers, @NonNull byte[] payload, @NonNull Throwable exception) {
                 completableFuture.completeExceptionally(exception);
             }
         }).get(5, TimeUnit.SECONDS);

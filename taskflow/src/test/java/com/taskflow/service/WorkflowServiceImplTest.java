@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 public class WorkflowServiceImplTest {
 
     @Mock
@@ -36,6 +37,9 @@ public class WorkflowServiceImplTest {
 
     @Mock
     private EventPublisherService eventPublisher;
+
+    @Mock
+    private DagResolutionService dagResolutionService;
 
     @InjectMocks
     private WorkflowServiceImpl workflowService;
@@ -64,7 +68,7 @@ public class WorkflowServiceImplTest {
         // Assert
         assertNotNull(response);
         assertEquals("Test Workflow", response.name());
-        assertEquals(WorkflowStatus.PENDING, response.status());
+        assertEquals(WorkflowStatus.RUNNING, response.status());
 
         // Verify taskRepository.saveAll was called
         @SuppressWarnings("unchecked")

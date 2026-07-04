@@ -38,6 +38,7 @@ public class GlobalExceptionHandlerTest {
         assertNotNull(responseEntity.getBody());
         
         ErrorResponse errorResponse = responseEntity.getBody();
+        assertNotNull(errorResponse);
         assertEquals(HttpStatus.NOT_FOUND.value(), errorResponse.status());
         assertEquals("Not Found", errorResponse.error());
         assertEquals(errorMessage, errorResponse.message());

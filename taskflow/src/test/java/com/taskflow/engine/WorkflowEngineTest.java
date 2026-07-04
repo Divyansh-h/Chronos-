@@ -7,6 +7,8 @@ import com.taskflow.model.enums.WorkflowStatus;
 import com.taskflow.repository.TaskRepository;
 import com.taskflow.repository.WorkflowRepository;
 import com.taskflow.service.TaskQueueService;
+import com.taskflow.service.DagResolutionService;
+import com.taskflow.service.EventPublisherService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,9 +19,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 public class WorkflowEngineTest {
 
     @Mock
@@ -30,6 +35,12 @@ public class WorkflowEngineTest {
 
     @Mock
     private TaskQueueService taskQueueService;
+
+    @Mock
+    private EventPublisherService eventPublisher;
+
+    @Mock
+    private DagResolutionService dagResolutionService;
 
     @InjectMocks
     private WorkflowEngine workflowEngine;
@@ -58,6 +69,8 @@ public class WorkflowEngineTest {
                 .thenReturn(Collections.singletonList(workflow));
         when(taskRepository.findByWorkflowId(workflowId))
                 .thenReturn(Arrays.asList(pendingTask, completedTask));
+        when(dagResolutionService.unblockReadyTasks(any(Workflow.class), anyList()))
+                .thenReturn(Collections.emptyList());
 
         // Act
         workflowEngine.processWorkflows();
