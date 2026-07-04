@@ -11,6 +11,7 @@ import com.taskflow.model.WorkerNode;
 import com.taskflow.service.EventPublisherService;
 import com.taskflow.service.TaskQueueService;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @RequiredArgsConstructor
@@ -111,5 +113,19 @@ public class WorkerSimulator {
                 }
             }
         }
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        log.info("Shutting down worker simulator...");
+        executorService.shutdownNow();
+        try {
+            if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
+                log.warn("Worker threads did not terminate within 5 seconds");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        log.info("Worker simulator shut down complete.");
     }
 }
