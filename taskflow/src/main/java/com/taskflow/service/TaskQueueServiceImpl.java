@@ -54,38 +54,49 @@ public class TaskQueueServiceImpl implements TaskQueueService {
     }
 
     @Override
+    @Transactional
     public Optional<Task> pollTask(String workerId) {
+        String taskIdStr;
         try {
-            String taskIdStr = stringRedisTemplate.opsForList().rightPop(QUEUE_KEY, Duration.ofSeconds(POLL_TIMEOUT_SECONDS));
+            taskIdStr = stringRedisTemplate.opsForList().rightPop(QUEUE_KEY, Duration.ofSeconds(POLL_TIMEOUT_SECONDS));
             if (taskIdStr == null) {
                 return Optional.empty();
             }
-            
-            UUID taskId = UUID.fromString(taskIdStr);
+        } catch (RedisConnectionFailureException | QueryTimeoutException e) {
+            log.error("Failed to poll task queue: {}", e.getMessage());
+            return Optional.empty();
+        }
+
+        UUID taskId = UUID.fromString(taskIdStr);
+
+        try {
             Optional<Task> taskOpt = taskRepository.findById(taskId);
-            
+
             if (taskOpt.isPresent()) {
                 Task task = taskOpt.get();
                 task.setStatus(TaskStatus.RUNNING);
                 task.setAssignedWorker(workerId);
                 task.setStartedAt(Instant.now());
-                
+
                 task = taskRepository.save(task);
-                
+
                 eventPublisher.publishEvent(new WorkflowEvent("TASK_UPDATE", task.getWorkflowId(), task.getId(), task.getStatus().name()));
-                
+
                 log.info("Worker {} claimed task {}", workerId, taskId);
                 return Optional.of(task);
             } else {
                 log.warn("Task ID found in Redis but missing in DB: {}", taskId);
                 return Optional.empty();
             }
-            
-        } catch (RedisConnectionFailureException | QueryTimeoutException e) {
-            log.error("Failed to poll task queue: {}", e.getMessage());
-            return Optional.empty();
         } catch (Exception e) {
-            log.error("Error polling task from Redis for worker: {}", workerId, e);
+            // Compensating action: re-push the task back to Redis so it isn't permanently lost
+            log.error("Failed to claim task {} for worker {}. Re-pushing to queue.", taskId, workerId, e);
+            try {
+                stringRedisTemplate.opsForList().leftPush(QUEUE_KEY, taskIdStr);
+                log.info("Task {} re-pushed to queue after failed claim", taskId);
+            } catch (Exception requeueEx) {
+                log.error("CRITICAL: Failed to re-push task {} to Redis. Task may be orphaned.", taskId, requeueEx);
+            }
             return Optional.empty();
         }
     }
