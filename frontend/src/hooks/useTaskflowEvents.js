@@ -8,7 +8,7 @@ export default function useTaskflowEvents() {
 
   useEffect(() => {
     const stompClient = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws-endpoint'),
+      webSocketFactory: () => new SockJS(`${import.meta.env.VITE_API_BASE_URL || ''}/ws-endpoint`),
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
