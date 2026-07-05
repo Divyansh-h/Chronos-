@@ -2,10 +2,8 @@ package com.taskflow.engine;
 
 import com.taskflow.model.Task;
 import com.taskflow.model.enums.TaskStatus;
-import com.taskflow.model.enums.WorkflowStatus;
 import com.taskflow.repository.TaskRepository;
 import com.taskflow.repository.WorkerNodeRepository;
-import com.taskflow.repository.WorkflowRepository;
 import com.taskflow.dto.WorkflowEvent;
 import com.taskflow.model.WorkerNode;
 import com.taskflow.service.EventPublisherService;
@@ -31,7 +29,6 @@ public class WorkerSimulator {
     private final WorkerNodeRepository workerNodeRepository;
     private final TaskQueueService taskQueueService;
     private final TaskRepository taskRepository;
-    private final WorkflowRepository workflowRepository;
     private final EventPublisherService eventPublisher;
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(3);
@@ -100,15 +97,8 @@ public class WorkerSimulator {
                             
                             eventPublisher.publishEvent(new WorkflowEvent("TASK_UPDATE", freshTask.getWorkflowId(), freshTask.getId(), "FAILED"));
                             
-                            workflowRepository.findById(freshTask.getWorkflowId()).ifPresent(workflow -> {
-                                workflow.setStatus(WorkflowStatus.FAILED);
-                                workflow.setCompletedAt(Instant.now());
-                                workflowRepository.save(workflow);
-                                
-                                eventPublisher.publishEvent(new WorkflowEvent("WORKFLOW_UPDATE", workflow.getId(), null, "FAILED"));
-                                
-                                log.error("Workflow {} failed due to task {}", workflow.getId(), freshTask.getId());
-                            });
+                            log.warn("Task {} permanently failed after {}/{} retries. WorkflowEngine will evaluate workflow state.",
+                                    freshTask.getName(), freshTask.getRetryCount(), maxRetries);
                         }
                     });
                 }
