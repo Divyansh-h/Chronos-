@@ -17,8 +17,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -94,9 +97,20 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Override
     public List<WorkflowResponse> listWorkflows() {
-        return workflowRepository.findAll().stream()
+        List<Workflow> workflows = workflowRepository.findAll();
+        if (workflows.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<UUID> workflowIds = workflows.stream().map(Workflow::getId).toList();
+        List<Task> allTasks = taskRepository.findByWorkflowIdIn(workflowIds);
+        
+        Map<UUID, List<Task>> tasksByWorkflowId = allTasks.stream()
+                .collect(Collectors.groupingBy(Task::getWorkflowId));
+
+        return workflows.stream()
                 .map(workflow -> {
-                    List<Task> tasks = taskRepository.findByWorkflowId(workflow.getId());
+                    List<Task> tasks = tasksByWorkflowId.getOrDefault(workflow.getId(), Collections.emptyList());
                     return WorkflowResponse.fromEntity(workflow, tasks);
                 })
                 .toList();
