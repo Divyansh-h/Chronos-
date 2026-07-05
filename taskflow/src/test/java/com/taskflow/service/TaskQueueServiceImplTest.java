@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,23 +40,42 @@ public class TaskQueueServiceImplTest {
     private TaskQueueServiceImpl taskQueueService;
 
     @Test
-    void enqueueTask_ShouldSaveToDbAndPushToRedis() {
+    void enqueueTask_ShouldClaimAtomicallyAndPushToRedis() {
         // Arrange
         UUID taskId = UUID.randomUUID();
-        Task mockTask = new Task();
-        mockTask.setId(taskId);
-        mockTask.setStatus(TaskStatus.PENDING);
 
-        when(taskRepository.findById(taskId)).thenReturn(Optional.of(mockTask));
+        // Simulate a successful atomic claim (1 row updated)
+        when(taskRepository.claimForEnqueue(
+                eq(taskId), eq(TaskStatus.QUEUED), eq(List.of(TaskStatus.PENDING, TaskStatus.FAILED))))
+                .thenReturn(1);
         when(stringRedisTemplate.opsForList()).thenReturn(listOperations);
 
         // Act
         taskQueueService.enqueueTask(taskId);
 
-        // Assert
-        assertEquals(TaskStatus.QUEUED, mockTask.getStatus());
-        verify(taskRepository, times(1)).save(mockTask);
+        // Assert: atomic claim was invoked, and task was pushed to Redis
+        verify(taskRepository, times(1)).claimForEnqueue(
+                eq(taskId), eq(TaskStatus.QUEUED), eq(List.of(TaskStatus.PENDING, TaskStatus.FAILED)));
         verify(listOperations, times(1)).leftPush("taskflow:queue:pending", taskId.toString());
+        // No findById or save should be called — the atomic UPDATE handles the state transition
+        verify(taskRepository, never()).findById(any());
+        verify(taskRepository, never()).save(any());
+    }
+
+    @Test
+    void enqueueTask_ShouldSkipWhenAlreadyClaimed() {
+        // Arrange: simulate another thread already claimed this task (0 rows updated)
+        UUID taskId = UUID.randomUUID();
+
+        when(taskRepository.claimForEnqueue(
+                eq(taskId), eq(TaskStatus.QUEUED), eq(List.of(TaskStatus.PENDING, TaskStatus.FAILED))))
+                .thenReturn(0);
+
+        // Act
+        taskQueueService.enqueueTask(taskId);
+
+        // Assert: Redis should NEVER be touched — the task was already claimed
+        verify(stringRedisTemplate, never()).opsForList();
     }
 
     @Test

@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,15 +34,15 @@ public class TaskQueueServiceImpl implements TaskQueueService {
     @Override
     @Transactional
     public void enqueueTask(UUID taskId) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        // Atomic conditional update: only transitions PENDING/FAILED → QUEUED.
+        // If another thread already claimed this task, updatedRows == 0 and we skip.
+        int updatedRows = taskRepository.claimForEnqueue(
+                taskId, TaskStatus.QUEUED, List.of(TaskStatus.PENDING, TaskStatus.FAILED));
 
-        if (task.getStatus() != TaskStatus.PENDING && task.getStatus() != TaskStatus.FAILED) {
-            throw new IllegalArgumentException("Task must be PENDING or FAILED to be enqueued");
+        if (updatedRows == 0) {
+            log.debug("Task {} already claimed or not in enqueueable state, skipping", taskId);
+            return;
         }
-
-        task.setStatus(TaskStatus.QUEUED);
-        taskRepository.save(task);
 
         try {
             stringRedisTemplate.opsForList().leftPush(QUEUE_KEY, taskId.toString());
