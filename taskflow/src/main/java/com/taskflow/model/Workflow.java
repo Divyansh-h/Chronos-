@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.NoArgsConstructor;
@@ -42,6 +43,9 @@ public class Workflow {
     private Instant createdAt;
 
     private Instant completedAt;
+
+    @Version
+    private Long version;
 
     @Override
     public boolean equals(Object o) {

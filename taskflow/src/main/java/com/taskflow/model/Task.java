@@ -10,6 +10,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -58,6 +59,9 @@ public class Task {
 
     @Column(name = "dag_node_index")
     private Integer dagNodeIndex;
+
+    @Version
+    private Long version;
 
     @Override
     public boolean equals(Object o) {

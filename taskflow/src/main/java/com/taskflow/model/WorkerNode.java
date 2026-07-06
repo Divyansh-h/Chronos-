@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -35,6 +36,9 @@ public class WorkerNode {
     private Integer tasksCompleted = 0;
 
     private Integer currentLoad = 0;
+
+    @Version
+    private Long version;
 
     @Override
     public boolean equals(Object o) {
