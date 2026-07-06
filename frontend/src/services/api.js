@@ -29,3 +29,21 @@ export async function createWorkflow(payload) {
   }
   return response.json();
 }
+
+export async function cancelWorkflow(id) {
+  const response = await fetch(`${BASE_URL}/workflows/${id}/cancel`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to cancel workflow: ${response.statusText}`);
+  }
+}
+
+export async function retryWorkflow(id) {
+  const response = await fetch(`${BASE_URL}/workflows/${id}/retry`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to retry workflow: ${response.statusText}`);
+  }
+}

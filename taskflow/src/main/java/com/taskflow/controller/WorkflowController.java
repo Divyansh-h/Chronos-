@@ -45,4 +45,16 @@ public class WorkflowController {
         Page<WorkflowResponse> response = workflowService.listWorkflows(PageRequest.of(page, size));
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<Void> cancelWorkflow(@PathVariable UUID id) {
+        workflowService.cancelWorkflow(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/retry")
+    public ResponseEntity<Void> retryWorkflow(@PathVariable UUID id) {
+        workflowService.retryWorkflow(id);
+        return ResponseEntity.ok().build();
+    }
 }

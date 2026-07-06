@@ -115,4 +115,58 @@ public class WorkflowServiceImpl implements WorkflowService {
             return WorkflowResponse.fromEntity(workflow, tasks);
         });
     }
+
+    @Override
+    @Transactional
+    public void cancelWorkflow(UUID id) {
+        Workflow workflow = workflowRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Workflow not found"));
+        
+        if (workflow.getStatus() == WorkflowStatus.COMPLETED || workflow.getStatus() == WorkflowStatus.FAILED) {
+            return;
+        }
+        
+        workflow.setStatus(WorkflowStatus.FAILED);
+        workflowRepository.save(workflow);
+        
+        List<Task> tasks = taskRepository.findByWorkflowId(id);
+        for (Task task : tasks) {
+            if (task.getStatus() == TaskStatus.PENDING || task.getStatus() == TaskStatus.QUEUED 
+                || task.getStatus() == TaskStatus.RUNNING || task.getStatus() == TaskStatus.BLOCKED) {
+                task.setStatus(TaskStatus.FAILED);
+                task.setErrorLog("Workflow cancelled by user");
+            }
+        }
+        taskRepository.saveAll(tasks);
+        
+        eventPublisher.publishEvent(new WorkflowEvent("WORKFLOW_UPDATE", workflow.getId(), null, workflow.getStatus().name()));
+    }
+
+    @Override
+    @Transactional
+    public void retryWorkflow(UUID id) {
+        Workflow workflow = workflowRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Workflow not found"));
+                
+        if (workflow.getStatus() != WorkflowStatus.FAILED) {
+            return;
+        }
+        
+        workflow.setStatus(WorkflowStatus.RUNNING);
+        workflowRepository.save(workflow);
+        
+        List<Task> tasks = taskRepository.findByWorkflowId(id);
+        for (Task task : tasks) {
+            if (task.getStatus() == TaskStatus.FAILED) {
+                task.setStatus(TaskStatus.BLOCKED);
+                task.setRetryCount(0);
+                task.setErrorLog(null);
+            }
+        }
+        taskRepository.saveAll(tasks);
+        
+        dagResolutionService.unblockReadyTasks(workflow, tasks);
+        
+        eventPublisher.publishEvent(new WorkflowEvent("WORKFLOW_UPDATE", workflow.getId(), null, workflow.getStatus().name()));
+    }
 }

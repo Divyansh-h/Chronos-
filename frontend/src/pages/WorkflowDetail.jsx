@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getWorkflow } from '../services/api';
+import { getWorkflow, cancelWorkflow, retryWorkflow } from '../services/api';
 import useTaskflowEvents from '../hooks/useTaskflowEvents';
 import DAGVisualizer from '../components/ui/DAGVisualizer';
 import StatusBadge from '../components/ui/StatusBadge';
@@ -56,6 +56,26 @@ export default function WorkflowDetail() {
     }
   }, [events, id]);
 
+  const handleCancel = async () => {
+    try {
+      await cancelWorkflow(id);
+      // Optimistic update
+      setWorkflow(prev => ({ ...prev, status: 'FAILED' }));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleRetry = async () => {
+    try {
+      await retryWorkflow(id);
+      // Optimistic update
+      setWorkflow(prev => ({ ...prev, status: 'RUNNING' }));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center mt-20">
@@ -81,11 +101,19 @@ export default function WorkflowDetail() {
         </div>
         
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-red-500/50 text-red-400 hover:bg-red-500/10 transition-colors">
+          <button 
+            onClick={handleCancel}
+            disabled={workflow.status === 'COMPLETED' || workflow.status === 'FAILED'}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-red-500/50 text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <XCircle className="w-4 h-4" />
             Cancel Workflow
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-brand-blue/50 text-brand-blue hover:bg-brand-blue/10 transition-colors">
+          <button 
+            onClick={handleRetry}
+            disabled={workflow.status !== 'FAILED'}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-brand-blue/50 text-brand-blue hover:bg-brand-blue/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <Play className="w-4 h-4" />
             Retry Failed
           </button>

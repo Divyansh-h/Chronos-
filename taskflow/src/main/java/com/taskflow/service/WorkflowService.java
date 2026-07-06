@@ -11,4 +11,6 @@ public interface WorkflowService {
     WorkflowResponse createWorkflow(WorkflowCreateRequest request);
     WorkflowResponse getWorkflow(UUID id);
     Page<WorkflowResponse> listWorkflows(Pageable pageable);
+    void cancelWorkflow(UUID id);
+    void retryWorkflow(UUID id);
 }
