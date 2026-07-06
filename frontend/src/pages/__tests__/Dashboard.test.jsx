@@ -41,7 +41,7 @@ describe('Dashboard Page Component', () => {
     
     // Wrap the resolution in act() to tell React a state transition is happening
     act(() => {
-      resolveApi(mockWorkflows);
+      resolveApi({ content: mockWorkflows, totalPages: 1 });
     });
 
     // Assert 2: Wait for React to re-render, then assert the loading state is entirely gone

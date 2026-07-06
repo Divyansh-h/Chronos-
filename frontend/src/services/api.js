@@ -1,7 +1,7 @@
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL || ''}/api/v1`;
 
-export async function getWorkflows() {
-  const response = await fetch(`${BASE_URL}/workflows`);
+export async function getWorkflows(page = 0, size = 10) {
+  const response = await fetch(`${BASE_URL}/workflows?page=${page}&size=${size}`);
   if (!response.ok) {
     throw new Error(`Failed to fetch workflows: ${response.statusText}`);
   }

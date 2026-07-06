@@ -30,7 +30,7 @@ describe('API Service - getWorkflows', () => {
     const result = await getWorkflows();
 
     // Assert
-    expect(fetchSpy).toHaveBeenCalledWith('http://localhost:8080/api/v1/workflows');
+    expect(fetchSpy).toHaveBeenCalledWith('http://localhost:8080/api/v1/workflows?page=0&size=10');
     expect(result).toEqual(mockData);
   });
 

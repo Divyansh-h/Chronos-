@@ -8,15 +8,18 @@ export default function Workflows() {
   const [name, setName] = useState('');
   const [dagJson, setDagJson] = useState('[\n  { "name": "Task 1" },\n  { "name": "Task 2", "dependsOn": ["Task 1"] }\n]');
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
-    fetchWorkflows();
-  }, []);
+    fetchWorkflows(page);
+  }, [page]);
 
-  const fetchWorkflows = async () => {
+  const fetchWorkflows = async (pageIndex = 0) => {
     try {
-      const data = await getWorkflows();
-      setWorkflows(data);
+      const data = await getWorkflows(pageIndex, 10);
+      setWorkflows(data.content || []);
+      setTotalPages(data.totalPages || 0);
     } catch (err) {
       console.error(err);
     }
@@ -81,6 +84,26 @@ export default function Workflows() {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex justify-between items-center mt-4">
+        <button 
+          onClick={() => setPage(p => Math.max(0, p - 1))}
+          disabled={page === 0}
+          className="px-4 py-2 bg-white/5 text-slate-300 rounded disabled:opacity-30 hover:bg-white/10"
+        >
+          Previous
+        </button>
+        <span className="text-slate-400 text-sm">
+          Page {page + 1} of {Math.max(1, totalPages)}
+        </span>
+        <button 
+          onClick={() => setPage(p => p + 1)}
+          disabled={page >= totalPages - 1}
+          className="px-4 py-2 bg-white/5 text-slate-300 rounded disabled:opacity-30 hover:bg-white/10"
+        >
+          Next
+        </button>
       </div>
 
       {isModalOpen && (

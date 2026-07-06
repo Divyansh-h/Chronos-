@@ -13,6 +13,8 @@ import com.taskflow.repository.TaskRepository;
 import com.taskflow.repository.WorkflowRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -96,23 +98,21 @@ public class WorkflowServiceImpl implements WorkflowService {
     }
 
     @Override
-    public List<WorkflowResponse> listWorkflows() {
-        List<Workflow> workflows = workflowRepository.findAll();
-        if (workflows.isEmpty()) {
-            return Collections.emptyList();
+    public Page<WorkflowResponse> listWorkflows(Pageable pageable) {
+        Page<Workflow> workflowPage = workflowRepository.findAll(pageable);
+        if (workflowPage.isEmpty()) {
+            return Page.empty(pageable);
         }
 
-        List<UUID> workflowIds = workflows.stream().map(Workflow::getId).toList();
+        List<UUID> workflowIds = workflowPage.getContent().stream().map(Workflow::getId).toList();
         List<Task> allTasks = taskRepository.findByWorkflowIdIn(workflowIds);
         
         Map<UUID, List<Task>> tasksByWorkflowId = allTasks.stream()
                 .collect(Collectors.groupingBy(Task::getWorkflowId));
 
-        return workflows.stream()
-                .map(workflow -> {
-                    List<Task> tasks = tasksByWorkflowId.getOrDefault(workflow.getId(), Collections.emptyList());
-                    return WorkflowResponse.fromEntity(workflow, tasks);
-                })
-                .toList();
+        return workflowPage.map(workflow -> {
+            List<Task> tasks = tasksByWorkflowId.getOrDefault(workflow.getId(), Collections.emptyList());
+            return WorkflowResponse.fromEntity(workflow, tasks);
+        });
     }
 }

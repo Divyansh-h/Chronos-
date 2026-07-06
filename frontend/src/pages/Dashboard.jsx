@@ -13,8 +13,8 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const data = await getWorkflows();
-        setWorkflows(data || []);
+        const data = await getWorkflows(0, 100);
+        setWorkflows(data.content || []);
         setError(null);
       } catch (err) {
         console.error('Failed to load workflows:', err);
@@ -51,7 +51,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <StatCard 
-          title="Total Workflows" 
+          title="Total Workflows (Recent)" 
           value={loading ? "..." : totalWorkflows} 
           icon={<Layers className="w-6 h-6" />} 
         />
