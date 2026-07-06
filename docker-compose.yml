@@ -11,9 +11,19 @@ services:
       POSTGRES_DB: taskflow
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d taskflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   toxiproxy:
     image: ghcr.io/shopify/toxiproxy
@@ -24,7 +34,8 @@ services:
     volumes:
       - ./toxiproxy.json:/etc/toxiproxy.json
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
 
   backend:
     build:
@@ -36,9 +47,16 @@ services:
       # Route all Redis traffic through Toxiproxy instead of directly to Redis
       SPRING_DATA_REDIS_HOST: toxiproxy
       SPRING_DATA_REDIS_PORT: 26379
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/v1/workflows || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     depends_on:
-      - postgres
-      - toxiproxy
+      postgres:
+        condition: service_healthy
+      toxiproxy:
+        condition: service_started
 
   frontend:
     build:
@@ -46,7 +64,8 @@ services:
     ports:
       - "5173:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   postgres_data:
