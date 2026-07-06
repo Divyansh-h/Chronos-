@@ -94,7 +94,12 @@ export default function WorkflowDetail() {
       
       <div className="flex-1 relative">
         <DAGVisualizer 
-          tasks={workflow.tasks || []} 
+          tasks={
+            workflow.tasks?.map(t => {
+              const dagNode = workflow.dagDefinition?.find(d => d.name === t.name);
+              return { ...t, dependsOn: dagNode?.dependsOn || [] };
+            }) || []
+          } 
           onNodeClick={(task) => setSelectedTask(task)}
         />
         

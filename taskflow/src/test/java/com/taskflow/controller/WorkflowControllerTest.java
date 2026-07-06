@@ -51,6 +51,7 @@ public class WorkflowControllerTest {
                 WorkflowStatus.PENDING,
                 Instant.now(),
                 null,
+                null,
                 Collections.emptyList()
         );
 
