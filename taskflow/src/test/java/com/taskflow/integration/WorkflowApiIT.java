@@ -30,9 +30,13 @@ public class WorkflowApiIT extends AbstractIntegrationTest {
         
         WorkflowCreateRequest request = new WorkflowCreateRequest("End-to-End Workflow", dagDefinition);
 
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.set("X-API-Key", "super_secret_api_key");
+        org.springframework.http.HttpEntity<WorkflowCreateRequest> requestEntity = new org.springframework.http.HttpEntity<>(request, headers);
+
         // Act 1: HTTP POST to create workflow
         ResponseEntity<WorkflowResponse> postResponse = restTemplate.postForEntity(
-                "/api/v1/workflows", request, WorkflowResponse.class);
+                "/api/v1/workflows", requestEntity, WorkflowResponse.class);
 
         // Assert 1: Creation Success
         assertEquals(HttpStatus.CREATED, postResponse.getStatusCode());
@@ -41,9 +45,10 @@ public class WorkflowApiIT extends AbstractIntegrationTest {
         assertEquals("End-to-End Workflow", postBody.name());
         assertNotNull(postBody.id());
 
+        org.springframework.http.HttpEntity<Void> getEntity = new org.springframework.http.HttpEntity<>(headers);
         // Act 2: HTTP GET to fetch workflow
-        ResponseEntity<WorkflowResponse> getResponse = restTemplate.getForEntity(
-                "/api/v1/workflows/" + postBody.id(), WorkflowResponse.class);
+        ResponseEntity<WorkflowResponse> getResponse = restTemplate.exchange(
+                "/api/v1/workflows/" + postBody.id(), org.springframework.http.HttpMethod.GET, getEntity, WorkflowResponse.class);
 
         // Assert 2: Fetch Success and Data Integrity
         assertEquals(HttpStatus.OK, getResponse.getStatusCode());

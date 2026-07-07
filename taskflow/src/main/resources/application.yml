@@ -4,12 +4,13 @@ server:
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/taskflow
-    username: postgres
-    password: postgres
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
   data:
     redis:
       host: localhost
       port: 6379
+      password: ${REDIS_PASSWORD:secure_redis_password}
   jpa:
     hibernate:
       ddl-auto: validate

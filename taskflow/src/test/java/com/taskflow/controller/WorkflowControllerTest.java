@@ -21,6 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(WorkflowController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @SuppressWarnings("null")
 public class WorkflowControllerTest {
 
