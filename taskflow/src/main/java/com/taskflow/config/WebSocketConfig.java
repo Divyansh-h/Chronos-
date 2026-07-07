@@ -7,13 +7,33 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+import org.springframework.beans.factory.annotation.Value;
+
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    @Value("${taskflow.rabbitmq.host:localhost}")
+    private String relayHost;
+
+    @Value("${taskflow.rabbitmq.port:61613}")
+    private int relayPort;
+
+    @Value("${taskflow.rabbitmq.username:guest}")
+    private String clientLogin;
+
+    @Value("${taskflow.rabbitmq.password:guest}")
+    private String clientPasscode;
+
     @Override
     public void configureMessageBroker(@NonNull MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic");
+        config.enableStompBrokerRelay("/topic")
+                .setRelayHost(relayHost)
+                .setRelayPort(relayPort)
+                .setClientLogin(clientLogin)
+                .setClientPasscode(clientPasscode)
+                .setSystemLogin(clientLogin)
+                .setSystemPasscode(clientPasscode);
         config.setApplicationDestinationPrefixes("/app");
     }
 

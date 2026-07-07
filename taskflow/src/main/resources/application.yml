@@ -22,3 +22,8 @@ spring:
 taskflow:
   engine:
     polling-interval-ms: 2000
+  rabbitmq:
+    host: ${RABBITMQ_HOST:rabbitmq}
+    port: ${RABBITMQ_STOMP_PORT:61613}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASS:guest}

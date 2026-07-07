@@ -62,6 +62,8 @@ services:
         condition: service_healthy
       toxiproxy:
         condition: service_started
+      rabbitmq:
+        condition: service_healthy
 
   frontend:
     build:
@@ -71,6 +73,24 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    command: >
+      sh -c "rabbitmq-plugins enable --offline rabbitmq_stomp &&
+             rabbitmq-server"
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+      - "61613:61613" # STOMP
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
