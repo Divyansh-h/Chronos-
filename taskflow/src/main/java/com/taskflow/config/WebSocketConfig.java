@@ -14,16 +14,16 @@ import org.springframework.beans.factory.annotation.Value;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Value("${taskflow.rabbitmq.host:localhost}")
-    private String relayHost;
+    private @org.springframework.lang.NonNull String relayHost;
 
     @Value("${taskflow.rabbitmq.port:61613}")
     private int relayPort;
 
     @Value("${taskflow.rabbitmq.username:guest}")
-    private String clientLogin;
+    private @org.springframework.lang.NonNull String clientLogin;
 
     @Value("${taskflow.rabbitmq.password:guest}")
-    private String clientPasscode;
+    private @org.springframework.lang.NonNull String clientPasscode;
 
     @Override
     public void configureMessageBroker(@NonNull MessageBrokerRegistry config) {

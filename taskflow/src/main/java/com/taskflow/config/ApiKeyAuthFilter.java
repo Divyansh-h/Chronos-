@@ -23,7 +23,9 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
     private static final String API_KEY_HEADER = "X-API-Key";
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(@org.springframework.lang.NonNull HttpServletRequest request, 
+                                    @org.springframework.lang.NonNull HttpServletResponse response, 
+                                    @org.springframework.lang.NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
         String requestApiKey = request.getHeader(API_KEY_HEADER);

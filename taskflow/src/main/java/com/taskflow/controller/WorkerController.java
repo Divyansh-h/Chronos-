@@ -18,7 +18,7 @@ public class WorkerController {
     private final WorkerNodeRepository workerNodeRepository;
 
     @GetMapping
-    public ResponseEntity<Page<WorkerResponse>> listWorkers(Pageable pageable) {
+    public ResponseEntity<Page<WorkerResponse>> listWorkers(@org.springframework.lang.NonNull Pageable pageable) {
         Page<WorkerResponse> workers = workerNodeRepository.findAll(pageable)
                 .map(worker -> new WorkerResponse(
                         worker.getId(),
