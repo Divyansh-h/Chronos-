@@ -59,3 +59,13 @@ export async function retryWorkflow(id) {
     throw new Error(`Failed to retry workflow: ${response.statusText}`);
   }
 }
+
+export async function getWorkers(page = 0, size = 20) {
+  const response = await fetch(`${BASE_URL}/workers?page=${page}&size=${size}`, {
+    headers: getHeaders()
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch workers: ${response.statusText}`);
+  }
+  return response.json();
+}

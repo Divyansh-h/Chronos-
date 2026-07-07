@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -54,9 +55,21 @@ public class WorkerSimulator {
         while (!Thread.currentThread().isInterrupted()) {
             Optional<Task> optionalTask = taskQueueService.pollTask(workerId);
             
+            // Periodically update heartbeat
+            workerNodeRepository.findById(UUID.fromString(workerId)).ifPresent(w -> {
+                w.setLastHeartbeat(Instant.now());
+                workerNodeRepository.save(w);
+            });
+            
             if (optionalTask.isPresent()) {
                 Task task = optionalTask.get();
                 log.info("Worker {} executing task {}", hostname, task.getName());
+                
+                // Increment currentLoad
+                workerNodeRepository.findById(UUID.fromString(workerId)).ifPresent(w -> {
+                    w.setCurrentLoad(w.getCurrentLoad() + 1);
+                    workerNodeRepository.save(w);
+                });
                 
                 try {
                     Thread.sleep((long) (Math.random() * 3000 + 1000));
@@ -75,6 +88,13 @@ public class WorkerSimulator {
                         eventPublisher.publishEvent(new WorkflowEvent("TASK_UPDATE", freshTask.getWorkflowId(), freshTask.getId(), "COMPLETED"));
                         
                         log.info("Task {} completed successfully", freshTask.getName());
+                    });
+                    
+                    // Decrement currentLoad, increment tasksCompleted
+                    workerNodeRepository.findById(UUID.fromString(workerId)).ifPresent(w -> {
+                        w.setCurrentLoad(Math.max(0, w.getCurrentLoad() - 1));
+                        w.setTasksCompleted(w.getTasksCompleted() + 1);
+                        workerNodeRepository.save(w);
                     });
                 } else {
                     taskRepository.findById(task.getId()).ifPresent(freshTask -> {
@@ -100,6 +120,12 @@ public class WorkerSimulator {
                             log.warn("Task {} permanently failed after {}/{} retries. WorkflowEngine will evaluate workflow state.",
                                     freshTask.getName(), freshTask.getRetryCount(), maxRetries);
                         }
+                    });
+                    
+                    // Decrement currentLoad
+                    workerNodeRepository.findById(UUID.fromString(workerId)).ifPresent(w -> {
+                        w.setCurrentLoad(Math.max(0, w.getCurrentLoad() - 1));
+                        workerNodeRepository.save(w);
                     });
                 }
             }
