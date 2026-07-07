@@ -27,3 +27,12 @@ taskflow:
     port: ${RABBITMQ_STOMP_PORT:61613}
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASS:guest}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
