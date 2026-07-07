@@ -12,6 +12,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -63,70 +64,82 @@ public class WorkerSimulator {
             
             if (optionalTask.isPresent()) {
                 Task task = optionalTask.get();
-                log.info("Worker {} executing task {}", hostname, task.getName());
-                
-                // Increment currentLoad
-                workerNodeRepository.findById(UUID.fromString(workerId)).ifPresent(w -> {
-                    w.setCurrentLoad(w.getCurrentLoad() + 1);
-                    workerNodeRepository.save(w);
-                });
-                
                 try {
-                    Thread.sleep((long) (Math.random() * 3000 + 1000));
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
+                    MDC.put("workerId", workerId);
+                    MDC.put("taskId", task.getId().toString());
+                    if (task.getWorkflowId() != null) {
+                        MDC.put("workflowId", task.getWorkflowId().toString());
+                    }
+                    
+                    log.info("Worker {} executing task {}", hostname, task.getName());
+                    
+                    // Increment currentLoad
+                    workerNodeRepository.findById(UUID.fromString(workerId)).ifPresent(w -> {
+                        w.setCurrentLoad(w.getCurrentLoad() + 1);
+                        workerNodeRepository.save(w);
+                    });
+                    
+                    try {
+                        Thread.sleep((long) (Math.random() * 3000 + 1000));
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
 
-                boolean success = Math.random() < 0.9;
-                if (success) {
-                    taskRepository.findById(task.getId()).ifPresent(freshTask -> {
-                        freshTask.setStatus(TaskStatus.COMPLETED);
-                        freshTask.setCompletedAt(Instant.now());
-                        taskRepository.save(freshTask);
-                        
-                        eventPublisher.publishEvent(new WorkflowEvent("TASK_UPDATE", freshTask.getWorkflowId(), freshTask.getId(), "COMPLETED"));
-                        
-                        log.info("Task {} completed successfully", freshTask.getName());
-                    });
-                    
-                    // Decrement currentLoad, increment tasksCompleted
-                    workerNodeRepository.findById(UUID.fromString(workerId)).ifPresent(w -> {
-                        w.setCurrentLoad(Math.max(0, w.getCurrentLoad() - 1));
-                        w.setTasksCompleted(w.getTasksCompleted() + 1);
-                        workerNodeRepository.save(w);
-                    });
-                } else {
-                    taskRepository.findById(task.getId()).ifPresent(freshTask -> {
-                        int currentRetries = freshTask.getRetryCount() == null ? 0 : freshTask.getRetryCount();
-                        int maxRetries = freshTask.getMaxRetries() == null ? 3 : freshTask.getMaxRetries();
-                        freshTask.setRetryCount(currentRetries + 1);
-                        
-                        if (freshTask.getRetryCount() <= maxRetries) {
-                            freshTask.setStatus(TaskStatus.PENDING);
-                            freshTask.setErrorLog("Random simulated failure");
+                    boolean success = Math.random() < 0.9;
+                    if (success) {
+                        taskRepository.findById(task.getId()).ifPresent(freshTask -> {
+                            freshTask.setStatus(TaskStatus.COMPLETED);
+                            freshTask.setCompletedAt(Instant.now());
                             taskRepository.save(freshTask);
                             
-                            eventPublisher.publishEvent(new WorkflowEvent("TASK_UPDATE", freshTask.getWorkflowId(), freshTask.getId(), "PENDING"));
+                            eventPublisher.publishEvent(new WorkflowEvent("TASK_UPDATE", freshTask.getWorkflowId(), freshTask.getId(), "COMPLETED"));
                             
-                            log.warn("Task {} failed, retrying ({}/{})", freshTask.getName(), freshTask.getRetryCount(), maxRetries);
-                        } else {
-                            freshTask.setStatus(TaskStatus.FAILED);
-                            freshTask.setErrorLog("Random simulated failure - Max retries exceeded");
-                            taskRepository.save(freshTask);
+                            log.info("Task {} completed successfully", freshTask.getName());
+                        });
+                        
+                        // Decrement currentLoad, increment tasksCompleted
+                        workerNodeRepository.findById(UUID.fromString(workerId)).ifPresent(w -> {
+                            w.setCurrentLoad(Math.max(0, w.getCurrentLoad() - 1));
+                            w.setTasksCompleted(w.getTasksCompleted() + 1);
+                            workerNodeRepository.save(w);
+                        });
+                    } else {
+                        taskRepository.findById(task.getId()).ifPresent(freshTask -> {
+                            int currentRetries = freshTask.getRetryCount() == null ? 0 : freshTask.getRetryCount();
+                            int maxRetries = freshTask.getMaxRetries() == null ? 3 : freshTask.getMaxRetries();
+                            freshTask.setRetryCount(currentRetries + 1);
                             
-                            eventPublisher.publishEvent(new WorkflowEvent("TASK_UPDATE", freshTask.getWorkflowId(), freshTask.getId(), "FAILED"));
-                            
-                            log.warn("Task {} permanently failed after {}/{} retries. WorkflowEngine will evaluate workflow state.",
-                                    freshTask.getName(), freshTask.getRetryCount(), maxRetries);
-                        }
-                    });
-                    
-                    // Decrement currentLoad
-                    workerNodeRepository.findById(UUID.fromString(workerId)).ifPresent(w -> {
-                        w.setCurrentLoad(Math.max(0, w.getCurrentLoad() - 1));
-                        workerNodeRepository.save(w);
-                    });
+                            if (freshTask.getRetryCount() <= maxRetries) {
+                                freshTask.setStatus(TaskStatus.PENDING);
+                                freshTask.setErrorLog("Random simulated failure");
+                                taskRepository.save(freshTask);
+                                
+                                eventPublisher.publishEvent(new WorkflowEvent("TASK_UPDATE", freshTask.getWorkflowId(), freshTask.getId(), "PENDING"));
+                                
+                                log.warn("Task {} failed, retrying ({}/{})", freshTask.getName(), freshTask.getRetryCount(), maxRetries);
+                            } else {
+                                freshTask.setStatus(TaskStatus.FAILED);
+                                freshTask.setErrorLog("Random simulated failure - Max retries exceeded");
+                                taskRepository.save(freshTask);
+                                
+                                eventPublisher.publishEvent(new WorkflowEvent("TASK_UPDATE", freshTask.getWorkflowId(), freshTask.getId(), "FAILED"));
+                                
+                                log.warn("Task {} permanently failed after {}/{} retries. WorkflowEngine will evaluate workflow state.",
+                                        freshTask.getName(), freshTask.getRetryCount(), maxRetries);
+                            }
+                        });
+                        
+                        // Decrement currentLoad
+                        workerNodeRepository.findById(UUID.fromString(workerId)).ifPresent(w -> {
+                            w.setCurrentLoad(Math.max(0, w.getCurrentLoad() - 1));
+                            workerNodeRepository.save(w);
+                        });
+                    }
+                } finally {
+                    MDC.remove("workerId");
+                    MDC.remove("taskId");
+                    MDC.remove("workflowId");
                 }
             }
         }
