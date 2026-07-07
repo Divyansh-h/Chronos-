@@ -2,3 +2,4 @@ jdk21.tar.gz
 jdk21/
 target/
 taskflow/target/
+.env
