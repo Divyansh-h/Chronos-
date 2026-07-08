@@ -7,6 +7,7 @@ import WorkflowDetail from './pages/WorkflowDetail';
 import Workers from './pages/Workers';
 import Login from './pages/Login';
 import { Navigate } from 'react-router-dom';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 
 const ProtectedRoute = ({ children }) => {
   const apiKey = localStorage.getItem('API_KEY');
@@ -18,23 +19,25 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/*" element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/workflows" element={<Workflows />} />
-                <Route path="/workflows/:id" element={<WorkflowDetail />} />
-                <Route path="/workers" element={<Workers />} />
-              </Routes>
-            </DashboardLayout>
-          </ProtectedRoute>
-        } />
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/*" element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/workflows" element={<Workflows />} />
+                  <Route path="/workflows/:id" element={<WorkflowDetail />} />
+                  <Route path="/workers" element={<Workers />} />
+                </Routes>
+              </DashboardLayout>
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

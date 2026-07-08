@@ -6,13 +6,13 @@ export default function DashboardLayout({ children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-brand-navy overflow-hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
       {/* Mobile Hamburger Trigger */}
       <div className="md:hidden fixed top-4 left-4 z-50">
         <button 
           data-testid="mobile-menu-btn"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 bg-brand-navy border border-white/10 text-white rounded-lg shadow-lg hover:bg-white/5"
+          className="p-2 bg-white border border-slate-200 text-slate-700 rounded-lg shadow-sm hover:bg-slate-50"
         >
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>

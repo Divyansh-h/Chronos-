@@ -75,7 +75,7 @@ public class WorkflowEngineTest {
         workflowEngine.processWorkflows();
 
         // Assert
-        verify(taskQueueService, times(1)).enqueueTask(pendingTaskId);
-        verify(taskQueueService, never()).enqueueTask(completedTaskId);
+        verify(taskQueueService, times(1)).enqueueTask(pendingTask);
+        verify(taskQueueService, never()).enqueueTask(completedTask);
     }
 }

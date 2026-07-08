@@ -1,21 +1,21 @@
 import React from 'react';
 
 const STATUS_CONFIG = {
-  PENDING: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
-  QUEUED: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  RUNNING: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  COMPLETED: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  FAILED: 'bg-red-500/20 text-red-400 border-red-500/30'
+  'PENDING': 'bg-amber-100 text-amber-700 border-amber-200',
+  'RUNNING': 'bg-blue-100 text-blue-700 border-blue-200',
+  'COMPLETED': 'bg-green-100 text-green-700 border-green-200',
+  'FAILED': 'bg-red-100 text-red-700 border-red-200',
+  'BLOCKED': 'bg-slate-100 text-slate-700 border-slate-200'
 };
 
 export default function StatusBadge({ status }) {
   const normalizedStatus = status ? status.toUpperCase() : 'PENDING';
-  const colorClass = STATUS_CONFIG[normalizedStatus] || STATUS_CONFIG.PENDING;
+  const colorClass = STATUS_CONFIG[normalizedStatus] || 'bg-slate-100 text-slate-700 border-slate-200';
   
   return (
     <span className={`px-3 py-1 rounded-full text-xs font-medium border flex items-center gap-1.5 w-fit ${colorClass}`}>
       {normalizedStatus === 'RUNNING' && (
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+        <span className="w-1.5 h-1.5 rounded-full bg-blue-700 animate-pulse" />
       )}
       {status}
     </span>

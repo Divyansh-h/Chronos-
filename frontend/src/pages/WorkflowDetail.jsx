@@ -5,6 +5,7 @@ import useTaskflowEvents from '../hooks/useTaskflowEvents';
 import DAGVisualizer from '../components/ui/DAGVisualizer';
 import StatusBadge from '../components/ui/StatusBadge';
 import TaskDetailPanel from '../components/ui/TaskDetailPanel';
+import Skeleton from '../components/ui/Skeleton';
 import { Play, XCircle } from 'lucide-react';
 
 export default function WorkflowDetail() {
@@ -78,8 +79,11 @@ export default function WorkflowDetail() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center mt-20">
-        <p className="text-slate-400 text-lg animate-pulse">Loading workflow...</p>
+      <div className="flex flex-col h-full gap-4 mt-8">
+        <Skeleton className="h-10 w-1/3 mb-4" />
+        <div className="flex-1 rounded-xl border border-slate-200 bg-slate-100/50 p-4">
+          <Skeleton className="h-full w-full opacity-50" />
+        </div>
       </div>
     );
   }
@@ -96,7 +100,7 @@ export default function WorkflowDetail() {
     <div className="animate-[fadeIn_0.3s_ease-in_forwards] flex flex-col h-full">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold text-white">{workflow.name || 'Workflow Detail'}</h1>
+          <h1 className="text-3xl font-bold text-slate-900">{workflow.name || 'Workflow Detail'}</h1>
           <StatusBadge status={workflow.status} />
         </div>
         
@@ -104,7 +108,7 @@ export default function WorkflowDetail() {
           <button 
             onClick={handleCancel}
             disabled={workflow.status === 'COMPLETED' || workflow.status === 'FAILED'}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-red-500/50 text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-white shadow-sm"
           >
             <XCircle className="w-4 h-4" />
             Cancel Workflow
@@ -112,7 +116,7 @@ export default function WorkflowDetail() {
           <button 
             onClick={handleRetry}
             disabled={workflow.status !== 'FAILED'}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-brand-blue/50 text-brand-blue hover:bg-brand-blue/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-white shadow-sm"
           >
             <Play className="w-4 h-4" />
             Retry Failed

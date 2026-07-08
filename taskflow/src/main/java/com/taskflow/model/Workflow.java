@@ -1,6 +1,7 @@
 package com.taskflow.model;
 
 import com.taskflow.model.enums.WorkflowStatus;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -40,6 +41,7 @@ public class Workflow {
     private JsonNode dagDefinition;
 
     @CreationTimestamp
+    @Column(updatable = false)
     private Instant createdAt;
 
     private Instant completedAt;

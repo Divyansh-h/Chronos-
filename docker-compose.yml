@@ -80,9 +80,9 @@ services:
       sh -c "rabbitmq-plugins enable --offline rabbitmq_stomp &&
              rabbitmq-server"
     ports:
-      - "5672:5672"   # AMQP
-      - "15672:15672" # Management UI
-      - "61613:61613" # STOMP
+      - "5673:5672"   # AMQP
+      - "15673:15672" # Management UI
+      - "61614:61613" # STOMP
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}

@@ -4,6 +4,7 @@ import StatCard from '../components/ui/StatCard';
 import useTaskflowEvents from '../hooks/useTaskflowEvents';
 import { Layers, Activity, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import ActivityFeed from '../components/ui/ActivityFeed';
+import Skeleton from '../components/ui/Skeleton';
 
 export default function Dashboard() {
   const [workflows, setWorkflows] = useState([]);
@@ -40,7 +41,7 @@ export default function Dashboard() {
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-      <h1 className="text-3xl font-bold text-white mb-6">Dashboard</h1>
+      <h1 className="text-3xl font-bold text-slate-900 mb-6">Dashboard</h1>
       
       {error && (
         <div className="mb-6 bg-red-500/20 border border-red-500/50 rounded-lg p-4 flex items-center gap-3 text-red-400">
@@ -52,17 +53,17 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <StatCard 
           title="Total Workflows (Recent)" 
-          value={loading ? "..." : totalWorkflows} 
+          value={loading ? <Skeleton className="h-8 w-16" /> : totalWorkflows} 
           icon={<Layers className="w-6 h-6" />} 
         />
         <StatCard 
           title="Active Workflows" 
-          value={loading ? "..." : activeWorkflows} 
+          value={loading ? <Skeleton className="h-8 w-16" /> : activeWorkflows} 
           icon={<Activity className="w-6 h-6" />} 
         />
         <StatCard 
           title="Failed Workflows" 
-          value={loading ? "..." : failedWorkflows} 
+          value={loading ? <Skeleton className="h-8 w-16" /> : failedWorkflows} 
           icon={<AlertCircle className="w-6 h-6" />} 
         />
         <StatCard 

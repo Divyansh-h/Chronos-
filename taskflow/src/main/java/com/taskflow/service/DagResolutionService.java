@@ -82,9 +82,9 @@ public class DagResolutionService {
             return Collections.emptyList();
         }
 
-        // Build a map of task name → current status
-        Map<String, TaskStatus> statusByName = tasks.stream()
-                .collect(Collectors.toMap(Task::getName, Task::getStatus, (a, b) -> a));
+        // Build a map of task name → Task
+        Map<String, Task> taskByName = tasks.stream()
+                .collect(Collectors.toMap(Task::getName, t -> t, (a, b) -> a));
 
         List<Task> unblocked = new ArrayList<>();
 
@@ -93,10 +93,33 @@ public class DagResolutionService {
                 continue;
             }
 
+            // We still need statusByName for isTaskReady, or we can just adapt it
+            Map<String, TaskStatus> statusByName = taskByName.entrySet().stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getStatus()));
+
             if (isTaskReady(task, dagDefinition, statusByName)) {
                 log.info("Unblocking task '{}' (id={}) — all dependencies completed",
                         task.getName(), task.getId());
                 task.setStatus(TaskStatus.PENDING);
+                
+                // Merge dependency outputs into this task's inputs
+                JsonNode taskNode = findNodeByName(dagDefinition, task.getName());
+                if (taskNode != null) {
+                    List<String> dependencies = parseDependsOn(taskNode);
+                    if (!dependencies.isEmpty()) {
+                        com.fasterxml.jackson.databind.node.ObjectNode mergedInputs = com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode();
+                        for (String dep : dependencies) {
+                            Task depTask = taskByName.get(dep);
+                            if (depTask != null && depTask.getOutputData() != null) {
+                                mergedInputs.set(dep, depTask.getOutputData());
+                            }
+                        }
+                        if (!mergedInputs.isEmpty()) {
+                            task.setInputData(mergedInputs);
+                        }
+                    }
+                }
+
                 unblocked.add(task);
             }
         }

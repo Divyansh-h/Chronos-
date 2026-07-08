@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,24 +31,38 @@ public class TaskQueueServiceImpl implements TaskQueueService {
     private final EventPublisherService eventPublisher;
 
     @Override
-    @Transactional
-    public void enqueueTask(UUID taskId) {
-        // Atomic conditional update: only transitions PENDING/FAILED → QUEUED.
-        // If another thread already claimed this task, updatedRows == 0 and we skip.
-        int updatedRows = taskRepository.claimForEnqueue(
-                taskId, TaskStatus.QUEUED, List.of(TaskStatus.PENDING, TaskStatus.FAILED));
-
-        if (updatedRows == 0) {
-            log.debug("Task {} already claimed or not in enqueueable state, skipping", taskId);
+    public void enqueueTask(Task task) {
+        if (task.getStatus() != TaskStatus.PENDING && task.getStatus() != TaskStatus.FAILED) {
+            log.debug("Task {} not in enqueueable state, skipping", task.getId());
             return;
         }
 
-        try {
-            stringRedisTemplate.opsForList().leftPush(QUEUE_KEY, taskId.toString());
-            log.info("Task enqueued: {}", taskId);
-        } catch (RedisConnectionFailureException e) {
-            log.error("Failed to enqueue task to Redis. Rolling back transaction for task: {}", taskId, e);
-            throw new RuntimeException("Redis connection failed, rolling back task enqueue", e);
+        task.setStatus(TaskStatus.QUEUED);
+        task = taskRepository.save(task);
+        
+        final String taskId = task.getId().toString();
+        
+        if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        try {
+                            stringRedisTemplate.opsForList().leftPush(QUEUE_KEY, taskId);
+                            log.info("Task enqueued: {}", taskId);
+                        } catch (Exception e) {
+                            log.error("Failed to enqueue task to Redis after commit: {}", taskId, e);
+                        }
+                    }
+                }
+            );
+        } else {
+            try {
+                stringRedisTemplate.opsForList().leftPush(QUEUE_KEY, taskId);
+                log.info("Task enqueued (no active tx): {}", taskId);
+            } catch (Exception e) {
+                log.error("Failed to enqueue task to Redis: {}", taskId, e);
+            }
         }
     }
 
@@ -74,6 +87,13 @@ public class TaskQueueServiceImpl implements TaskQueueService {
 
             if (taskOpt.isPresent()) {
                 Task task = taskOpt.get();
+                
+                // Prevent duplicate execution if task is already in a terminal/running state
+                if (task.getStatus() == TaskStatus.COMPLETED || task.getStatus() == TaskStatus.RUNNING) {
+                    log.warn("Popped task {} from queue, but it is already in state {}. Discarding.", taskId, task.getStatus());
+                    return Optional.empty();
+                }
+
                 task.setStatus(TaskStatus.RUNNING);
                 task.setAssignedWorker(workerId);
                 task.setStartedAt(Instant.now());

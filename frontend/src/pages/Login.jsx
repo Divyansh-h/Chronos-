@@ -21,19 +21,19 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-2xl">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white border border-slate-200 rounded-xl p-8 shadow-sm">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-brand-blue/10 rounded-2xl flex items-center justify-center mb-4 border border-brand-blue/20 shadow-[0_0_15px_rgba(56,189,248,0.15)]">
-            <Key className="w-8 h-8 text-brand-blue" />
+          <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4 border border-slate-200">
+            <Key className="w-8 h-8 text-slate-900" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Welcome to Chronos</h1>
-          <p className="text-slate-400 text-sm mt-2">Enter your API key to continue</p>
+          <h1 className="text-2xl font-bold text-slate-900">Welcome to Chronos</h1>
+          <p className="text-slate-500 text-sm mt-2">Enter your API key to continue</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="apiKey" className="block text-sm font-medium text-slate-300 mb-2">
+            <label htmlFor="apiKey" className="block text-sm font-medium text-slate-700 mb-2">
               API Key
             </label>
             <input
@@ -41,15 +41,15 @@ export default function Login() {
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue transition-colors"
+              className="w-full bg-white border border-slate-300 rounded-md px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-colors"
               placeholder="Enter your API key"
             />
-            {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+            {error && <p className="text-red-500 text-sm mt-2 font-medium">{error}</p>}
           </div>
 
           <button
             type="submit"
-            className="w-full bg-brand-blue text-white rounded-lg px-4 py-3 font-medium hover:bg-sky-400 transition-colors shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_20px_rgba(56,189,248,0.4)]"
+            className="w-full bg-slate-900 text-white rounded-md px-4 py-3 font-medium hover:bg-slate-800 transition-colors shadow-sm"
           >
             Access Dashboard
           </button>

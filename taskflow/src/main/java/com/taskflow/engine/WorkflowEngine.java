@@ -60,7 +60,7 @@ public class WorkflowEngine {
                         
                 for (Task task : pendingTasks) {
                     try {
-                        taskQueueService.enqueueTask(task.getId());
+                        taskQueueService.enqueueTask(task);
                     } catch (Exception e) {
                         log.warn("Failed to enqueue task {} for workflow {}: {}", task.getId(), workflow.getId(), e.getMessage());
                     }

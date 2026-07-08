@@ -57,7 +57,7 @@ public class RedisQueueIntegrationTest extends AbstractIntegrationTest {
 
         // Act 1: Enqueue them via Redis
         for (Task task : savedTasks) {
-            taskQueueService.enqueueTask(task.getId());
+            taskQueueService.enqueueTask(task);
             
             // Verify DB status changed to QUEUED natively
             Task updatedTask = taskRepository.findById(task.getId()).orElseThrow();
@@ -109,7 +109,7 @@ public class RedisQueueIntegrationTest extends AbstractIntegrationTest {
         task.setRetryCount(0);
         task = taskRepository.save(task);
 
-        taskQueueService.enqueueTask(task.getId());
+        taskQueueService.enqueueTask(task);
 
         int threadCount = 10;
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);

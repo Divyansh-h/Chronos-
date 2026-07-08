@@ -10,9 +10,9 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   return (
-    <aside className="glass-panel w-64 h-screen sticky top-0 flex flex-col p-4 shrink-0 !rounded-none !border-y-0 !border-l-0">
+    <aside className="bg-white border-r border-slate-200 w-64 h-screen sticky top-0 flex flex-col p-4 shrink-0 shadow-sm z-10">
       <div className="mb-8 px-4 py-4">
-        <h1 className="text-xl font-bold tracking-wider text-white">TASKFLOW</h1>
+        <h1 className="text-xl font-bold tracking-wider text-brand-primary">TASKFLOW</h1>
       </div>
       
       <nav className="flex flex-col gap-2 flex-1">
@@ -21,10 +21,10 @@ export default function Sidebar() {
             key={item.path}
             to={item.path}
             className={({ isActive }) => 
-              `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
+              `flex items-center gap-3 px-4 py-3 rounded-md transition-colors duration-200 ${
                 isActive 
-                  ? 'bg-brand-blue/20 text-brand-blue font-medium' 
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-slate-100 text-brand-primary font-semibold' 
+                  : 'text-slate-500 hover:text-brand-primary hover:bg-slate-50'
               }`
             }
           >
